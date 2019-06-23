@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	expr "github.com/antonmedv/expr"
+	vm "github.com/antonmedv/expr/vm"
 )
 
 const (
@@ -29,12 +30,13 @@ type (
 	anonymiser struct {
 		reader.Reader
 		tables config.Tables
+		compiledRules map[string]*vm.Program
 	}
 )
 
 // NewAnonymiser returns a new anonymiser reader.
 func NewAnonymiser(source reader.Reader, tables config.Tables) reader.Reader {
-	return &anonymiser{source, tables}
+	return &anonymiser{source, tables, map[string]*vm.Program{}}
 }
 
 // ReadTable decorates reader.ReadTable method for anonymising rows published from the reader.Reader
@@ -50,6 +52,21 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 	if len(table.Anonymise) == 0 {
 		logger.Debug("Skipping anonymiser")
 		return a.Reader.ReadTable(tableName, rowChan, opts, matchers)
+	}
+
+	// Compile conditional anonymisation rules
+	for column, fakerType := range table.Anonymise {
+		if strings.HasPrefix(fakerType, conditionalPrefix) {
+			program, err := expr.Compile(strings.TrimPrefix(fakerType, conditionalPrefix))
+
+			if err != nil {
+				logger.WithError(err).Error("Conditional rule compilation failed")
+				continue
+			}
+
+			ruleKey := RuleKey(tableName, column)
+			a.compiledRules[ruleKey] = program
+		}
 	}
 
 	// Create read/write chanel
@@ -85,18 +102,9 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 							return noAnonymisation
 						},
 					}
-
-					conditionExpr := strings.TrimPrefix(fakerType, conditionalPrefix)
-					// fmt.Println(row)
-					// fmt.Println(conditionExpr)
-
-					program, err := expr.Compile(conditionExpr, expr.Env(env))
-					if err != nil {
-						logger.WithError(err).Error("Eval rule compilation error")
-						continue
-					}
-
-					output, err := expr.Run(program, env)
+					
+					ruleKey := RuleKey(table.Name, column)
+					output, err := expr.Run(a.compiledRules[ruleKey], env)
 					if err != nil {
 						logger.WithError(err).Error("Eval rule runtime error")
 						continue
@@ -146,4 +154,8 @@ func Anonymise(fakerType string) string {
 	}
 
 	return value
+}
+
+func RuleKey(tableName string, columnName string) string {
+	return tableName + "." + columnName
 }
