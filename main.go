@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/usoban/klepto/cmd"
+	"github.com/hellofresh/klepto/cmd"
 )
 
 func main() {

@@ -7,14 +7,14 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/usoban/klepto/pkg/config"
-	"github.com/usoban/klepto/pkg/database"
-	"github.com/usoban/klepto/pkg/reader"
+	"github.com/hellofresh/klepto/pkg/config"
+	"github.com/hellofresh/klepto/pkg/database"
+	"github.com/hellofresh/klepto/pkg/reader"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	expr "github.com/antonmedv/expr"
 	vm "github.com/antonmedv/expr/vm"
-	option "github.com/usoban/klepto/pkg/util"
+	option "github.com/hellofresh/klepto/pkg/util"
 )
 
 const (

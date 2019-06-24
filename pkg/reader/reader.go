@@ -3,8 +3,8 @@ package reader
 import (
 	"time"
 
-	"github.com/usoban/klepto/pkg/config"
-	"github.com/usoban/klepto/pkg/database"
+	"github.com/hellofresh/klepto/pkg/config"
+	"github.com/hellofresh/klepto/pkg/database"
 )
 
 type (

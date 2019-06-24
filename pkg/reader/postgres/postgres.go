@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"strings"
 
-	"github.com/usoban/klepto/pkg/reader"
+	"github.com/hellofresh/klepto/pkg/reader"
 	_ "github.com/lib/pq"
 )
 
