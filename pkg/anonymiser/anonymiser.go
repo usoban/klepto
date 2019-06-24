@@ -92,15 +92,24 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 						"row": row,
 						"column": row[column],
 						"Value": func(row database.Row, columnName string) string {
-							str := row[columnName].([]uint8)
+							columnValue := row[columnName]
 
-							return string(str)
+							if columnValue == nil {
+								return ""
+							}
+							
+							bytes := columnValue.([]uint8)
+
+							return string(bytes)
 						},
 						"Anon": func(fakerType string) *option.Option {
 							return option.Some(Anonymise(fakerType))
 						},
 						"Skip": func() *option.Option {
 							return option.None()
+						},
+						"IsNil": func(row database.Row, columnName string) bool {
+							return row[columnName] == nil
 						},
 					}
 					
