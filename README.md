@@ -212,9 +212,9 @@ $ fake master pkgreflect -notypes -novars -norecurs vendor/github.com/icrowley/f
 
 #### Conditional anonymisation
 
-Table row's column can be conditionally anonymised by writing an anonymisation expression. For evaluating anonymisation expressions, we use `Expr` package, and its [language definition can be found here][antonmedv-expr-language-definition].
+Column's value can be conditionally anonymised by writing an anonymisation expression. For evaluating anonymisation expressions, we use `Expr` package, and its [language definition can be found here][antonmedv-expr-language-definition].
 
-To conditionally anonymise a row, prefix the anonymisation expression with `cond:`, as seen in the example below.
+To conditionally anonymise a column, prefix the anonymisation expression with `cond:`, as seen in the example below. You can access other row's columns within the anonymisation expression.
 
 ```
 [[Tables]]
