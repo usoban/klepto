@@ -7,29 +7,29 @@ import (
 	"reflect"
 	"strings"
 
+	expr "github.com/antonmedv/expr"
+	vm "github.com/antonmedv/expr/vm"
 	"github.com/hellofresh/klepto/pkg/config"
 	"github.com/hellofresh/klepto/pkg/database"
 	"github.com/hellofresh/klepto/pkg/reader"
+	option "github.com/hellofresh/klepto/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	expr "github.com/antonmedv/expr"
-	vm "github.com/antonmedv/expr/vm"
-	option "github.com/hellofresh/klepto/pkg/util"
 )
 
 const (
 	// literalPrefix defines the constant we use to prefix literals
-	literalPrefix = "literal:"
+	literalPrefix     = "literal:"
 	conditionalPrefix = "cond:"
-	email         = "EmailAddress"
-	username      = "UserName"
-	password      = "Password"
+	email             = "EmailAddress"
+	username          = "UserName"
+	password          = "Password"
 )
 
 type (
 	anonymiser struct {
 		reader.Reader
-		tables config.Tables
+		tables        config.Tables
 		compiledRules map[string]*vm.Program
 	}
 )
@@ -89,7 +89,7 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 				if strings.HasPrefix(fakerType, conditionalPrefix) {
 
 					env := map[string]interface{}{
-						"row": row,
+						"row":    row,
 						"column": row[column],
 						"Value": func(row database.Row, columnName string) string {
 							columnValue := row[columnName]
@@ -97,7 +97,7 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 							if columnValue == nil {
 								return ""
 							}
-							
+
 							bytes := columnValue.([]uint8)
 
 							return string(bytes)
@@ -112,7 +112,7 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 							return row[columnName] == nil
 						},
 					}
-					
+
 					ruleKey := RuleKey(table.Name, column)
 					output, err := expr.Run(a.compiledRules[ruleKey], env)
 					if err != nil {
@@ -142,7 +142,7 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 	return nil
 }
 
-// Anonymise generates a fake value 
+// Anonymise generates a fake value
 func Anonymise(fakerType string) string {
 	var value string
 

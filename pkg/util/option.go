@@ -3,7 +3,7 @@ package option
 // Option type.
 type Option struct {
 	isSome bool
-	value interface{}
+	value  interface{}
 }
 
 func Some(value interface{}) *Option {
@@ -25,4 +25,3 @@ func Value(option *Option) interface{} {
 
 	return option.value
 }
-
