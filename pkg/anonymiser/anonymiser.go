@@ -14,13 +14,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	expr "github.com/antonmedv/expr"
 	vm "github.com/antonmedv/expr/vm"
+	option "github.com/usoban/klepto/pkg/util"
 )
 
 const (
 	// literalPrefix defines the constant we use to prefix literals
 	literalPrefix = "literal:"
 	conditionalPrefix = "cond:"
-	noAnonymisation = "__DO_NOT_ANONYMIZE__"
 	email         = "EmailAddress"
 	username      = "UserName"
 	password      = "Password"
@@ -91,15 +91,16 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 					env := map[string]interface{}{
 						"row": row,
 						"column": row[column],
-						"Value": func(row database.Row, key string) string {
-							str := row[key].([]uint8)
+						"Value": func(row database.Row, columnName string) string {
+							str := row[columnName].([]uint8)
+
 							return string(str)
 						},
-						"Anon": func(fakerType string) string {
-							return Anonymise(fakerType)
+						"Anon": func(fakerType string) *option.Option {
+							return option.Some(Anonymise(fakerType))
 						},
-						"Skip": func() string {
-							return noAnonymisation
+						"Skip": func() *option.Option {
+							return option.None()
 						},
 					}
 					
@@ -110,8 +111,9 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 						continue
 					}
 
-					if output != noAnonymisation {
-						row[column] = output
+					opt := output.(*option.Option)
+					if option.IsSome(opt) {
+						row[column] = option.Value(opt)
 					}
 
 					continue
@@ -131,6 +133,7 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 	return nil
 }
 
+// Anonymise generates a fake value 
 func Anonymise(fakerType string) string {
 	var value string
 
@@ -156,6 +159,7 @@ func Anonymise(fakerType string) string {
 	return value
 }
 
+// RuleKey generates a key for storing VM program of specific table's column.
 func RuleKey(tableName string, columnName string) string {
 	return tableName + "." + columnName
 }
