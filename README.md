@@ -272,7 +272,7 @@ To dump the latest 100 users with their orders:
 For linux
 
 ```zsh
-GOOS=linux GOARCH=amd64 go build -o klepto-linux
+GOOS=linux GOARCH=amd64 go build -o klepto-linux-amd64
 ```
 
 For macos
