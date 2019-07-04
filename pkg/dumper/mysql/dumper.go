@@ -36,12 +36,35 @@ func NewDumper(conn *sql.DB, rdr reader.Reader) dumper.Dumper {
 	})
 }
 
+func (d *myDumper) GetDatabaseName() (string, error) {
+	log.Debug("fetching database name")
+
+	var dbName string
+	err := d.conn.QueryRow("SELECT DATABASE()").Scan(&dbName)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to fetch database name")
+	}
+
+	log.WithField("dbName", dbName).Debug("fetched database name")
+
+	return dbName, nil
+}
+
 // DumpStructure dump the mysql database structure.
 func (d *myDumper) DumpStructure(sql string) error {
 	if _, err := d.conn.Exec(sql); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+// DumpViewDefinitions dumps the mysql database view definitions
+func (d *myDumper) DumpViewDefinitions(sql string) error {
+	if _, err := d.conn.Exec(sql); err != nil {
+		return err
+	}
+	
 	return nil
 }
 

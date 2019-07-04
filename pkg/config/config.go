@@ -7,11 +7,15 @@ type (
 	Spec struct {
 		Matchers
 		Tables
+		Views
 	}
 
 	// Matchers are variables to store filter data,
 	// you can declare a filter once and reuse it among tables.
 	Matchers map[string]string
+
+	// Views is a list of views which should be copied over in priority order
+	Views map[string]int
 
 	// Tables are an array of table definitions.
 	Tables []*Table

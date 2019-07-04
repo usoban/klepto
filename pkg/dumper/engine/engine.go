@@ -2,6 +2,9 @@ package engine
 
 import (
 	"sync"
+	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/hellofresh/klepto/pkg/config"
 	"github.com/hellofresh/klepto/pkg/database"
@@ -22,8 +25,12 @@ type (
 	Dumper interface {
 		// DumpStructure dumps database structure given a sql.
 		DumpStructure(sql string) error
+		// DumpViewDefinitions dumps database view definitions given as sql
+		DumpViewDefinitions(sql string) error
 		// DumpTable dumps a table by name.
 		DumpTable(tableName string, rowChan <-chan database.Row) error
+		// GetDatabaseName returns the name of currently active SQL database
+		GetDatabaseName() (string, error)
 		// Close closes the dumper resources and releases them.
 		Close() error
 	}
@@ -52,6 +59,61 @@ func (e *Engine) Dump(done chan<- struct{}, spec *config.Spec, concurrency int) 
 	}
 
 	return e.readAndDumpTables(done, spec, concurrency)
+}
+
+// DumpViews dumps views from one database to another.
+func (e *Engine) DumpViews(done chan<- struct{}, spec *config.Spec, sourceDbPrefix string, destinationDbPrefix string) error {
+	return e.readAndDumpViews(spec, sourceDbPrefix, destinationDbPrefix)
+}
+
+func replacePrefix(sourcePrefix string, destinationPrefix string) func(string) string {
+	return func(input string) string {
+		return strings.Replace(input, sourcePrefix, destinationPrefix, 1)
+	}
+}
+
+func (e *Engine) readAndDumpViews(spec *config.Spec, sourceDbPrefix string, destinationDbPrefix string) error {
+	log.Debug("dumping views...")
+	
+	// sourceDbName, err := e.reader.GetDatabaseName()
+	// if err != nil {
+	// 	return err
+	// }
+
+	// log.WithField("source_db_name", sourceDbName).Debug("source DB!")
+
+	// destDbName, err := e.Dumper.GetDatabaseName()
+	// if err != nil {
+	// 	return err
+	// }
+	
+	sql, err := e.reader.GetViewDefinitions(spec)
+
+	if err != nil {
+		return errors.Wrap(err, "failed to get view definitions")
+	}
+
+	// TODO.
+	if len(sourceDbPrefix) == 0 {
+		return errors.New("not available without source db prefix")
+	}
+
+	if len(sourceDbPrefix) > 0 {
+		sourceDbPrefix = fmt.Sprintf("%s_", sourceDbPrefix)
+	}
+	if len(destinationDbPrefix) > 0 {
+		destinationDbPrefix = fmt.Sprintf("%s_", destinationDbPrefix)
+	}
+
+	r := regexp.MustCompile(fmt.Sprintf("(`%s[^`]+?`)\\.`[^`]+?`", sourceDbPrefix))
+	destSQL := r.ReplaceAllStringFunc(sql, replacePrefix(sourceDbPrefix, destinationDbPrefix))
+
+	if err := e.DumpViewDefinitions(destSQL); err != nil {
+		return errors.Wrap(err, "failed to dump view definitions")
+	}
+
+	log.Debug("views were dumped")
+	return nil
 }
 
 func (e *Engine) readAndDumpStructure() error {

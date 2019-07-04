@@ -29,8 +29,12 @@ type (
 
 	// Storage is the read storage database interface.
 	Storage interface {
+		// GetDatabaseName returns the name of currently active database
+		GetDatabaseName() (string, error)
 		// GetStructure returns the SQL used to create the database tables
 		GetStructure() (string, error)
+		// GetViewDefinitions returns the SQL used to create the database views
+		GetViewDefinitions(*config.Spec) (string, error)
 		// GetTables return a list of all database tables
 		GetTables() ([]string, error)
 		// GetColumns return a list of all columns for a given table

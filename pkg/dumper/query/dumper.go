@@ -30,6 +30,10 @@ func NewDumper(output io.Writer, rdr reader.Reader) dumper.Dumper {
 	}
 }
 
+func (d *textDumper) GetDatabaseName() (string, error) {
+	panic("NOT AVAILABLE")
+}
+
 // Dump executes the dump stream process.
 func (d *textDumper) Dump(done chan<- struct{}, spec *config.Spec, concurrency int) error {
 	tables, err := d.reader.GetTables()
@@ -85,6 +89,12 @@ func (d *textDumper) Dump(done chan<- struct{}, spec *config.Spec, concurrency i
 		}
 	}
 
+	return nil
+}
+
+// DumpViews is a dummy method?
+func (d *textDumper) DumpViews(done chan<- struct{}, spec *config.Spec, sourceDbPrefix string, destinationDbPrefix string) error {
+	log.Debug("Nothing to do...")
 	return nil
 }
 

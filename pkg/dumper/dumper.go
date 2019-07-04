@@ -22,6 +22,10 @@ type (
 	Dumper interface {
 		// Dump executes the dump process.
 		Dump(chan<- struct{}, *config.Spec, int) error
+		// DumpViews executes the view dumping process
+		DumpViews(chan<- struct{}, *config.Spec, string, string) error
+		// GetDatabaseName returns the name of currently active SQL database
+		GetDatabaseName() (string, error)
 		// Close closes the dumper resources and releases them.
 		Close() error
 	}

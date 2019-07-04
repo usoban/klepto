@@ -30,12 +30,21 @@ func NewDumper(conn *sql.DB, rdr reader.Reader) dumper.Dumper {
 	})
 }
 
+func (d *pgDumper) GetDatabaseName() (string, error) {
+	panic("NOT AVAILABLE")
+}
+
 // DumpStructure dump the mysql database structure.
 func (d *pgDumper) DumpStructure(sql string) error {
 	if _, err := d.conn.Exec(sql); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+// DumpViewDefinitions dumps the mysql database view definitions
+func (d *pgDumper) DumpViewDefinitions(sql string) error {
 	return nil
 }
 

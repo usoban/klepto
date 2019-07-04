@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"sort"
 
+	"github.com/hellofresh/klepto/pkg/config"
 	"github.com/hellofresh/klepto/pkg/reader"
 	"github.com/hellofresh/klepto/pkg/reader/engine"
 	"github.com/pkg/errors"
@@ -15,11 +17,17 @@ import (
 
 const (
 	baseTable = "BASE TABLE"
+	view = "VIEW"
 )
 
 type (
 	storage struct {
 		conn *sql.DB
+	}
+
+	wView struct {
+		name string
+		weight int
 	}
 )
 
@@ -28,6 +36,20 @@ func NewStorage(conn *sql.DB, timeout time.Duration) reader.Reader {
 	return engine.New(&storage{
 		conn: conn,
 	}, timeout)
+}
+
+func (s *storage) GetDatabaseName() (string, error) {
+	log.Debug("fetching database name")
+
+	var dbName string
+	err := s.conn.QueryRow("SELECT DATABASE()").Scan(&dbName)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to fetch database name")
+	}
+
+	log.WithField("dbName", dbName).Debug("fetched database name")
+
+	return dbName, nil
 }
 
 // GetTables gets a list of all tables in the database.
@@ -54,6 +76,32 @@ func (s *storage) GetTables() ([]string, error) {
 	log.WithField("tables", tables).Debug("fetched table list")
 
 	return tables, nil
+}
+
+func (s *storage) GetViews() ([]string, error) {
+	log.Debug("fetching views list")
+
+	rows, err := s.conn.Query("SHOW FULL TABLES WHERE TABLE_TYPE LIKE 'VIEW'")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	views := make([]string, 0)
+	for rows.Next() {
+		var viewName, tableType string
+		if err := rows.Scan(&viewName, &tableType); err != nil {
+			return nil, err
+		}
+
+		if tableType == view {
+			views = append(views, viewName)
+		}
+	}
+
+	log.WithField("views", views).Debug("fetched views list")
+
+	return views, nil
 }
 
 // GetColumns returns the columns in the specified database table
@@ -106,6 +154,60 @@ func (s *storage) GetStructure() (string, error) {
 	}
 
 	buf.WriteString("SET FOREIGN_KEY_CHECKS=1;")
+
+	return buf.String(), nil
+}
+
+func getViewWeight(viewName string, spec *config.Spec) int {
+	weight, isKeyPresent := spec.Views[viewName]
+
+	if isKeyPresent {
+		return weight
+	}
+
+	return int(^uint(0) >> 1) // That's max int :)
+}
+
+// GetViewDefinitions dumps the mysql database view definitions
+func (s *storage) GetViewDefinitions(spec *config.Spec) (string, error) {
+	views, err := s.GetViews()
+
+	weightedViews := make([]wView, 0)
+	for _, viewName := range views {
+		v := &wView{name: viewName, weight: getViewWeight(viewName, spec)}
+		weightedViews = append(weightedViews, *v)
+	}
+
+	sort.Slice(weightedViews, func(i, j int) bool {
+		return weightedViews[i].weight < weightedViews[j].weight
+	})
+
+	fmt.Printf("%+v\n", weightedViews)
+
+	if err != nil {
+		return "", err
+	}
+
+	preamble, err := s.getPreamble()
+	if err != nil {
+		return "", err
+	}
+
+	buf := bytes.NewBufferString(preamble)
+	for _, weightedView := range weightedViews {
+		var viewName, viewStmt, query string
+		
+		viewName = weightedView.name
+		
+		query = fmt.Sprintf("SELECT VIEW_DEFINITION FROM information_schema.VIEWS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '%s'", viewName)
+		err := s.conn.QueryRow(query).Scan(&viewStmt)
+		if err != nil {
+			return "", err
+		}
+
+		buf.WriteString(fmt.Sprintf("CREATE OR REPLACE VIEW %s AS %s", s.QuoteIdentifier(viewName), viewStmt))
+		buf.WriteString(";\n")
+	}
 
 	return buf.String(), nil
 }

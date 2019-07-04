@@ -18,8 +18,12 @@ type (
 
 	// Reader provides an interface to access database stores.
 	Reader interface {
+		// GetDatabaseName returns the name of currently active SQL database
+		GetDatabaseName() (string, error)
 		// GetStructure returns the SQL used to create the database tables
 		GetStructure() (string, error)
+		// GetViewDefinitions returns the SQL used to create database views
+		GetViewDefinitions(*config.Spec) (string, error)
 		// GetTables returns a list of all databases tables
 		GetTables() ([]string, error)
 		// GetColumns return a list of all columns for a given table

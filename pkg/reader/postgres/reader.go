@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hellofresh/klepto/pkg/config"
 	"github.com/hellofresh/klepto/pkg/reader"
 	"github.com/hellofresh/klepto/pkg/reader/engine"
 	"github.com/pkg/errors"
@@ -17,7 +18,7 @@ type (
 		conn *sql.DB
 	}
 
-	// PgDump executes the pg dump command.
+	// PgDumper executes the pg dump command.
 	PgDumper interface {
 		GetStructure() (stmt string, err error)
 	}
@@ -29,6 +30,10 @@ func NewStorage(conn *sql.DB, dumper PgDumper, timeout time.Duration) reader.Rea
 		PgDumper: dumper,
 		conn:     conn,
 	}, timeout)
+}
+
+func (s *storage) GetDatabaseName() (string, error) {
+	panic("NOT AVAILABLE")
 }
 
 // GetTables gets a list of all tables in the database
@@ -57,6 +62,12 @@ func (s *storage) GetTables() ([]string, error) {
 
 	return tables, nil
 }
+
+// GetViewDefinitions dumps the mysql database view definitions
+func (s *storage) GetViewDefinitions(spec *config.Spec) (string, error) {
+	panic("NOT AVAILABLE")
+}
+
 
 func (s *storage) GetColumns(table string) ([]string, error) {
 	log.WithField("table", table).Debug("fetching table columns")

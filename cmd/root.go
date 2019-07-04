@@ -35,6 +35,7 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to config file (default is ./.klepto)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Make the operation more talkative")
 
+	RootCmd.AddCommand(NewMirrorCmd())
 	RootCmd.AddCommand(NewStealCmd())
 	RootCmd.AddCommand(NewVersionCmd())
 	RootCmd.AddCommand(NewUpdateCmd())
