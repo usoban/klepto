@@ -200,6 +200,7 @@ func (e *Engine) publishRows(rows *sql.Rows, rowChan chan<- database.Row, tableN
 
 	fieldPointers := make([]interface{}, columnCount)
 
+	nRows := 0
 	for rows.Next() {
 		row := make(database.Row, columnCount)
 		fields := make([]interface{}, columnCount)
@@ -217,8 +218,12 @@ func (e *Engine) publishRows(rows *sql.Rows, rowChan chan<- database.Row, tableN
 			row[column] = fields[idx]
 		}
 
+		nRows++
+		
 		rowChan <- row
 	}
+
+	log.WithField("table", tableName).WithField("n_rows", nRows).Debug("read all rows")
 
 	return nil
 }
