@@ -241,6 +241,8 @@ The functions are:
 
 - `IsNil(row database.Row, columnName string) bool` will return a boolean indicating whether the column value of given row is a nil value
 
+- `Literal(str string) *Option` will return the string argument as an anonymisation value
+
 <a name="relationships"></a>
 ### Relationships
 The `Relationships` key represents a relationship between the table and referenced table.

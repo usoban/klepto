@@ -111,6 +111,9 @@ func (a *anonymiser) ReadTable(tableName string, rowChan chan<- database.Row, op
 						"IsNil": func(row database.Row, columnName string) bool {
 							return row[columnName] == nil
 						},
+						"Literal": func(str string) *option.Option {
+							return option.Some(str)
+						},
 					}
 
 					ruleKey := RuleKey(table.Name, column)

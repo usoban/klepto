@@ -63,7 +63,13 @@ func (e *Engine) Dump(done chan<- struct{}, spec *config.Spec, concurrency int) 
 
 // DumpViews dumps views from one database to another.
 func (e *Engine) DumpViews(done chan<- struct{}, spec *config.Spec, sourceDbPrefix string, destinationDbPrefix string) error {
-	return e.readAndDumpViews(spec, sourceDbPrefix, destinationDbPrefix)
+	err := e.readAndDumpViews(spec, sourceDbPrefix, destinationDbPrefix)
+	
+	go func() {
+		done <- struct{}{}
+	}()
+	
+	return err
 }
 
 func replacePrefix(sourcePrefix string, destinationPrefix string) func(string) string {
@@ -75,18 +81,6 @@ func replacePrefix(sourcePrefix string, destinationPrefix string) func(string) s
 func (e *Engine) readAndDumpViews(spec *config.Spec, sourceDbPrefix string, destinationDbPrefix string) error {
 	log.Debug("dumping views...")
 	
-	// sourceDbName, err := e.reader.GetDatabaseName()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// log.WithField("source_db_name", sourceDbName).Debug("source DB!")
-
-	// destDbName, err := e.Dumper.GetDatabaseName()
-	// if err != nil {
-	// 	return err
-	// }
-	
 	sql, err := e.reader.GetViewDefinitions(spec)
 
 	if err != nil {
@@ -96,13 +90,6 @@ func (e *Engine) readAndDumpViews(spec *config.Spec, sourceDbPrefix string, dest
 	// TODO.
 	if len(sourceDbPrefix) == 0 {
 		return errors.New("not available without source db prefix")
-	}
-
-	if len(sourceDbPrefix) > 0 {
-		sourceDbPrefix = fmt.Sprintf("%s_", sourceDbPrefix)
-	}
-	if len(destinationDbPrefix) > 0 {
-		destinationDbPrefix = fmt.Sprintf("%s_", destinationDbPrefix)
 	}
 
 	r := regexp.MustCompile(fmt.Sprintf("(`%s[^`]+?`)\\.`[^`]+?`", sourceDbPrefix))
