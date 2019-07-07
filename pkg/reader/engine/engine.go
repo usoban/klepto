@@ -107,6 +107,12 @@ func (e *Engine) ReadTable(tableName string, rowChan chan<- database.Row, opts r
 		return errors.Wrapf(err, "failed to build query for %s", tableName)
 	}
 
+	var rowCount int
+	countQuery := sq.Select("COUNT(*)").From(e.QuoteIdentifier(tableName))
+	countQuery.RunWith(e.Conn()).QueryRow().Scan(&rowCount)
+
+	log.WithField("table", tableName).WithField("n_rows_found", rowCount).Debug("queried row count")
+
 	var rows *sql.Rows
 	ctx, cancel := context.WithTimeout(context.Background(), e.timeout)
 	defer cancel()
@@ -114,6 +120,10 @@ func (e *Engine) ReadTable(tableName string, rowChan chan<- database.Row, opts r
 	errchan := make(chan error)
 	go func() {
 		defer close(errchan)
+
+		q, _, _ := query.ToSql()
+		log.WithField("query", q).Debug("Executing read query")
+
 		rows, err = query.RunWith(e.Conn()).QueryContext(ctx)
 		errchan <- err
 	}()
