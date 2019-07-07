@@ -121,8 +121,8 @@ func (e *Engine) ReadTable(tableName string, rowChan chan<- database.Row, opts r
 	go func() {
 		defer close(errchan)
 
-		q, _, _ := query.ToSql()
-		log.WithField("query", q).Debug("Executing read query")
+		q, a, _ := query.ToSql()
+		log.WithField("query", q).WithField("args", a).Debug("Executing read query")
 
 		rows, err = query.RunWith(e.Conn()).QueryContext(ctx)
 		errchan <- err
@@ -210,8 +210,10 @@ func (e *Engine) publishRows(rows *sql.Rows, rowChan chan<- database.Row, tableN
 
 	fieldPointers := make([]interface{}, columnCount)
 
-	nRows := 0
+	nRowsRead := 0
+	nRowsIterated := 0
 	for rows.Next() {
+		nRowsIterated++;
 		row := make(database.Row, columnCount)
 		fields := make([]interface{}, columnCount)
 
@@ -228,12 +230,12 @@ func (e *Engine) publishRows(rows *sql.Rows, rowChan chan<- database.Row, tableN
 			row[column] = fields[idx]
 		}
 
-		nRows++
+		nRowsRead++
 		
 		rowChan <- row
 	}
 
-	log.WithField("table", tableName).WithField("n_rows", nRows).Debug("read all rows")
+	log.WithField("table", tableName).WithField("n_rows_read", nRowsRead).WithField("n_rows_iterated", nRowsIterated).Debug("read all rows")
 
 	return nil
 }
