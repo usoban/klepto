@@ -64,7 +64,7 @@ func (d *myDumper) DumpViewDefinitions(sql string) error {
 	if _, err := d.conn.Exec(sql); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -146,7 +146,7 @@ func (d *myDumper) insertIntoTable(txn *sql.Tx, tableName string, rowChan <-chan
 				case nil:
 					rowValues[i] = null
 				case string:
-					rowValues[i] = row[col].(string)
+					rowValues[i] = fmt.Sprintf("%s", row[col].(string))
 				case []uint8:
 					rowValues[i] = string(row[col].([]uint8))
 				default:
