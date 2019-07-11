@@ -64,7 +64,7 @@ func (d *myDumper) DumpViewDefinitions(sql string) error {
 	if _, err := d.conn.Exec(sql); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -118,7 +118,7 @@ func (d *myDumper) insertIntoTable(txn *sql.Tx, tableName string, rowChan <-chan
 		columnsQuoted[i] = d.quoteIdentifier(column)
 	}
 	query := fmt.Sprintf(
-		"LOAD DATA LOCAL INFILE 'Reader::%s' INTO TABLE %s FIELDS TERMINATED BY ',' ENCLOSED BY '\"' ESCAPED BY '\"' (%s)",
+		"LOAD DATA LOCAL INFILE 'Reader::%s' INTO TABLE %s CHARACTER SET utf8mb4 FIELDS TERMINATED BY ',' ENCLOSED BY '\"' ESCAPED BY '\"' (%s)",
 		tableName,
 		d.quoteIdentifier(tableName),
 		strings.Join(columnsQuoted, ","),
