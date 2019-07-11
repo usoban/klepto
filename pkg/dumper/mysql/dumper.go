@@ -118,7 +118,7 @@ func (d *myDumper) insertIntoTable(txn *sql.Tx, tableName string, rowChan <-chan
 		columnsQuoted[i] = d.quoteIdentifier(column)
 	}
 	query := fmt.Sprintf(
-		"LOAD DATA LOCAL INFILE 'Reader::%s' INTO TABLE %s FIELDS TERMINATED BY ',' ENCLOSED BY '\"' ESCAPED BY '\"' (%s)",
+		"LOAD DATA LOCAL INFILE 'Reader::%s' INTO TABLE %s CHARACTER SET utf8mb4 FIELDS TERMINATED BY ',' ENCLOSED BY '\"' ESCAPED BY '\"' (%s)",
 		tableName,
 		d.quoteIdentifier(tableName),
 		strings.Join(columnsQuoted, ","),
@@ -146,7 +146,7 @@ func (d *myDumper) insertIntoTable(txn *sql.Tx, tableName string, rowChan <-chan
 				case nil:
 					rowValues[i] = null
 				case string:
-					rowValues[i] = fmt.Sprintf("%s", row[col].(string))
+					rowValues[i] = row[col].(string)
 				case []uint8:
 					rowValues[i] = string(row[col].([]uint8))
 				default:
