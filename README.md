@@ -272,12 +272,13 @@ To dump the latest 100 users with their orders:
 For linux
 
 ```zsh
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o klepto-linux
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o klepto-linux-amd64
 ```
 
 For macos
+
 ```
-GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o klepto-darwin
+GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o klepto-darwin-amd64
 ```
 
 [Here is all target values](https://gist.github.com/asukakenji/f15ba7e588ac42795f421b48b8aede63)
